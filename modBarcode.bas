@@ -82,26 +82,24 @@ Public Function Barcode128Auto(barcodeText As String)
 'see comments section for sample code
 'This function automatically selects modes A/B/C and switches between them for smallest possible output length
 
-    Dim mode As codeMode
-    mode = MODE_AUTO
     Dim outputString As String
     outputString = Convert128Auto(MODE_AUTO, barcodeText)
     
     Dim startChar As Integer
     Select Case Asc(Left(outputString, 1))
-    Case CODE128_SELECT_A: startChar = CODE128A_START
+    Case CODE128_SELECT_A: startChar = CODE128A_START 'convert first mode-switch symbol to equivalent start symbol
     Case CODE128_SELECT_B: startChar = CODE128B_START
     Case CODE128_SELECT_C: startChar = CODE128C_START
     End Select
     Mid(outputString, 1, 1) = Chr(startChar)
-    'Mid(outputString, 1, 1) = Chr(Asc(Left(outputString, 1)) + (CODE128A_START - CODE128_SELECT_A)) 'convert first mode change character to start character
 
     Barcode128Auto = outputString & CalculateChecksum(Left(outputString, 1), Mid(outputString, 2)) & Chr(CODE128_END)
 End Function
 
 
-Private Function Convert128Auto(ByRef currentMode As codeMode, inputString As String) As String
+Private Function Convert128Auto(currentMode As codeMode, inputString As String) As String
     Dim out As String
+    
     If NumOfNumericDigits(inputString) = 2 Then 'minor optimisation for specific case having two numeric digits at start (no gain if there's 1 or 3)
         out = out & Chr(CODE128_SELECT_C)
         currentMode = MODE_AUTO_C
@@ -115,10 +113,9 @@ Private Function Convert128Auto(ByRef currentMode As codeMode, inputString As St
         If currentMode <> MODE_AUTO_C And NumOfNumericDigits(s) >= 4 Then
             out = out & Chr(CODE128_SELECT_C)
             currentMode = MODE_AUTO_C
-            'numbers will be converted on next loop iteration
         End If
         Dim nextModeCheck As codeMode
-        nextModeCheck = FindNextBestMode(s) 'TODO: some avoidable mode switching can occur
+        nextModeCheck = FindNextBestMode(s) 'TODO: some redundant A/B mode switching might still occur
         If currentMode = MODE_AUTO_C And NumOfNumericDigits(s) >= 2 Then
             out = out & NumberToCode128CSymbol(Left(s, 2))
             i = i + 2
