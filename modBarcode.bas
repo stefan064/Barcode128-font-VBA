@@ -38,15 +38,15 @@ Public Function Barcode128A(barcodeText As String) As String
         End If
     Next i
     
-    Barcode128A = START_CHAR & barcodeText & CalculateChecksum(START_CHAR, barcodeText) & Chr(CODE128_END)
+    Barcode128A = START_CHAR & barcodeText & CalculateChecksum(START_CHAR & barcodeText) & Chr(CODE128_END)
 End Function
 
 
-Private Function CalculateChecksum(startChar As String, barcodeText As String) As String
+Private Function CalculateChecksum(barcodeText As String) As String
     Dim checksum As Long
-    checksum = Asc(startChar) - 100
+    checksum = Asc(barcodeText) - 100
     Dim i As Integer
-    For i = 1 To Len(barcodeText)
+    For i = 2 To Len(barcodeText)
         Dim charcode As Integer
         charcode = Asc(Mid(barcodeText, i, 1))
         If charcode >= CODE128_SELECT_C Then 'convert from font ascii values to code128 symbol values
@@ -54,7 +54,7 @@ Private Function CalculateChecksum(startChar As String, barcodeText As String) A
         Else
             charcode = charcode - 32 'offset by 32 to start at symbol 0. Assumes ascii control codes (<32) were already remapped to lowercase ascii area
         End If
-        checksum = checksum + (charcode * i)
+        checksum = checksum + (charcode * (i - 1))
     Next i
     'code 128 font printable characters range (ascii decimal): 32 - 126, 195 - 207 (203 - 207 are start/end symbols)
     
@@ -93,7 +93,7 @@ Public Function Barcode128Auto(barcodeText As String)
     End Select
     Mid(outputString, 1, 1) = Chr(startChar)
 
-    Barcode128Auto = outputString & CalculateChecksum(Left(outputString, 1), Mid(outputString, 2)) & Chr(CODE128_END)
+    Barcode128Auto = outputString & CalculateChecksum(outputString) & Chr(CODE128_END)
 End Function
 
 
