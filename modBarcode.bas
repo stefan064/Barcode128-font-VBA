@@ -51,6 +51,8 @@ Private Function CalculateChecksum(barcodeText As String) As String
         charcode = Asc(Mid(barcodeText, i, 1))
         If charcode >= CODE128_SELECT_C Then 'convert from font ascii values to code128 symbol values
             charcode = charcode - 100
+        ElseIf charcode >= 195 Then 'compensate for ascii map discontinuity between 126 and 195
+            charcode = charcode - (195 - 126 - 1) - 32 'see also same in NumberToCode128CSymbol()
         Else
             charcode = charcode - 32 'offset by 32 to start at symbol 0. Assumes ascii control codes (<32) were already remapped to lowercase ascii area
         End If
@@ -76,7 +78,12 @@ Function DebugString(inputText As String) As String
 End Function
 
 
-Public Function Barcode128Auto(barcodeText As String)
+Public Function Barcode128(barcodeText As String)
+    Barcode128 = Barcode128Auto(barcodeText)
+    'Barcode128 = Barcode128A(barcodeText)
+End Function
+
+Public Function Barcode128Auto(barcodeText As String) As String
 'intended for code128 truetype font
 'https://www.dafont.com/code-128.font
 'see comments section for sample code
@@ -158,7 +165,10 @@ End Function
 
 Private Function NumberToCode128CSymbol(inputVal As Integer) As String
     If inputVal > 99 Then Err.Raise 1, "NumberTo128CSymbol", "Can only fit two digits per symbol"
-    NumberToCode128CSymbol = Chr(inputVal + 32) 'offset for code128 font. symbol value 0 mapped to ascii 32
+    Dim codeAscii As Integer
+    codeAscii = inputVal + 32 'offset for code128 font. symbol value 0 mapped to ascii 32
+    If codeAscii > 126 Then codeAscii = codeAscii + (195 - 126 - 1) 'remap for symbols above ascii 126
+    NumberToCode128CSymbol = Chr(codeAscii) 
 End Function
 
 
